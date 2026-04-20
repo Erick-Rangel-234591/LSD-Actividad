@@ -3,11 +3,11 @@
 ## Instalación
 
 1. Navegar al proyecto:
-   - `cd "c:\Users\erick\Desktop\Carpeta Magistral\LSD-Actividad"`
+   - `cd "LSD-Actividad"`
 2. Activar el entorno virtual:
-   - `.\.venv\Scripts\Activate`
+   - `.venv\Scripts\Activate`
 3. Instalar dependencias:
-   - `pip install fastapi uvicorn numpy pandas requests cryptography`
+   - `pip install -r requirements.txt`
 4. Iniciar el servidor:
    - `uvicorn main:app --reload`
 5. Acceder a la API:
