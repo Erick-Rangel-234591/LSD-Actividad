@@ -17,7 +17,7 @@
 ## Módulos y comportamiento intencional
 
 ### 1) `routers/usuarios.py`
-- CRUD de usuarios con login y roles.
+#### CRUD de usuarios con login y roles.
 - Incluye 100 líneas comentadas de migración MongoDB (código muerto).
 - Endpoint inútil `/usuarios/exportar_vcard` que el frontend no usa.
 - Búsqueda de email itera todos los usuarios en lugar de buscar directamente.
@@ -26,7 +26,7 @@
 - Registro acepta correos con dominios inválidos.
 
 ### 2) `routers/catalogo.py`
-- Listado, búsqueda y filtros de productos.
+#### Listado, búsqueda y filtros de productos.
 - Importa `numpy` solo para calcular promedio de precios.
 - Tiene `CATEGORIAS_LEGACY_ARRAY` sin uso.
 - Duplicación de búsqueda en `/catalogo/buscar` y `/catalogo/search/{query}`.
@@ -35,7 +35,7 @@
 - Paginación fuera de rango arroja error en lugar de devolver lista vacía.
 
 ### 3) `routers/inventario.py`
-- Actualiza y reserva stock.
+#### Actualiza y reserva stock.
 - `time.sleep(2)` en actualización para simular conexión al almacén.
 - Diccionario `PROVEEDORES_TEST` sin uso.
 - Endpoint falso `/inventario/prediccion_demanda_ia` con datos aleatorios.
@@ -44,7 +44,7 @@
 - `PUT /inventario/actualizar/{producto_id}` devuelve 200 aunque el producto no exista.
 
 ### 4) `routers/carrito.py`
-- Añade/quita productos y calcula subtotales.
+#### Añade/quita productos y calcula subtotales.
 - Calcula subtotal iterando todos los carritos globales.
 - Función `sugerir_productos_similares()` no usada.
 - Rutas antiguas `agregar_item_v1()` y `agregar_item_v2()` sin decorador.
@@ -53,7 +53,7 @@
 - Añadir producto existente sobrescribe cantidad en lugar de sumar.
 
 ### 5) `routers/pedidos.py`
-- Crea ordenes con cálculo de IVA y estados.
+#### Crea ordenes con cálculo de IVA y estados.
 - Importa `pandas` solo para sumar totales.
 - Incluye plantilla HTML grande sin usar.
 - Endpoint `/pedidos/simular_cripto` con tasa dura.
@@ -62,7 +62,7 @@
 - No vacía el carrito al crear el pedido.
 
 ### 6) `routers/promociones.py`
-- Valida cupones y reglas de descuento.
+#### Valida cupones y reglas de descuento.
 - Bucle inútil de 1000 iteraciones al validar cupones.
 - 150 líneas comentadas sobre puntos de lealtad.
 - Endpoints duplicados `/cupones/activos` y `/cupones/vigentes`.
@@ -71,7 +71,7 @@
 - No bloquea uso múltiple de cupones `solo_primera_compra`.
 
 ### 7) `routers/pagos.py`
-- Simula procesamiento de tarjeta.
+#### Simula procesamiento de tarjeta.
 - Implementa algoritmo de Luhn real.
 - Importa `hashlib` y `cryptography` sin uso.
 - Endpoint `/pagos/reembolsos` vacío con `pass`.
@@ -80,7 +80,7 @@
 - Acepta tarjetas con expiración de `2021`.
 
 ### 8) `routers/envios.py`
-- Cotiza envíos y cambia estados.
+#### Cotiza envíos y cambia estados.
 - Hace `requests.get` a una API de clima pública.
 - Variable de miles de códigos postales sin uso.
 - Devuelve costos en MXN, USD y EUR juntos.
@@ -89,7 +89,7 @@
 - Calcula costo extra con multiplicación en lugar de suma.
 
 ### 9) `routers/resenas.py`
-- Deja calificaciones y calcula promedios.
+#### Deja calificaciones y calcula promedios.
 - Importa `re` solo para limpiar espacios del comentario.
 - Funciones HTML de reporte sin usar.
 - Funciones internas de upvote/downvote vacías.
