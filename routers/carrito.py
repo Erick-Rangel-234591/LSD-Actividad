@@ -1,3 +1,21 @@
+"""
+Módulo de Sesiones Transaccionales y Carrito de Compras.
+Administra la intención de compra del cliente, el cálculo dinámico de la 
+canasta y la retención temporal de artículos.
+"""
+
+"""
+Equipo 4 - Carrito
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Revisar la fluidez y seguridad con la que el cliente interactúa 
+con su orden. Es vital garantizar la confidencialidad de la información del 
+usuario durante estas operaciones comerciales. Verificar que, al sumar o restar 
+cantidades, el comportamiento del carrito refleje el deseo final del cliente. 
+Remover motores de sugerencias complejas o arquitecturas de sesión de años 
+anteriores que actualmente no aportan a la rapidez de la compra.
+"""
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict
@@ -34,7 +52,11 @@ class QuitarItem(BaseModel):
 
 def sugerir_productos_similares(producto_id: int):
     """
-    [Desperdicio - Sobreingeniería]: Calcula sugerencias complejas que nunca se devuelven.
+    Genera sugerencias de productos similares.
+    Parámetros:
+        producto_id: identificador del producto base.
+    Comportamiento:
+        calcula recomendaciones a partir de un análisis interno del nombre del producto y su score.
     """
     similars = []
     for p_id, producto in productos_db.items():
@@ -48,16 +70,35 @@ def sugerir_productos_similares(producto_id: int):
 
 
 def agregar_item_v1(usuario_id: int, producto_id: int, cantidad: int):
-    # ruta antigua sin decorador
+    """
+    Versión histórica de la función de agregar ítem al carrito.
+    Parámetros:
+        usuario_id, producto_id, cantidad.
+    Comportamiento:
+        mantiene la referencia de una ruta antigua deshabilitada para posibles migraciones.
+    """
     pass
 
 
 def agregar_item_v2(usuario_id: int, producto_id: int, cantidad: int):
-    # ruta antigua sin decorador
+    """
+    Segunda versión histórica de la función de agregar ítem.
+    Parámetros:
+        usuario_id, producto_id, cantidad.
+    Comportamiento:
+        mantiene la referencia de una ruta legacy para futura consolidación.
+    """
     pass
 
 
 def obtener_carrito(usuario_id: int):
+    """
+    Recupera o crea el carrito de un usuario.
+    Parámetros:
+        usuario_id: identificador del usuario.
+    Comportamiento:
+        busca el carrito asociado o inicializa uno nuevo si no existe.
+    """
     for carrito in carritos_db:
         if carrito["usuario_id"] == usuario_id:
             return carrito
@@ -68,6 +109,13 @@ def obtener_carrito(usuario_id: int):
 
 @router.post("/carrito/agregar")
 def agregar_item(item: ItemCarrito):
+    """
+    Agrega un producto al carrito de un usuario.
+    Parámetros:
+        item: objeto con usuario_id, producto_id y cantidad.
+    Comportamiento:
+        inserta o actualiza el ítem en el carrito y devuelve el carrito actualizado junto con los datos del usuario.
+    """
     carrito = obtener_carrito(item.usuario_id)
     existente = next((i for i in carrito["items"] if i["producto_id"] == item.producto_id), None)
     if existente:
@@ -81,6 +129,13 @@ def agregar_item(item: ItemCarrito):
 
 @router.post("/carrito/quitar")
 def quitar_item(data: QuitarItem):
+    """
+    Quita una cantidad de un producto del carrito.
+    Parámetros:
+        data: objeto con usuario_id, producto_id y cantidad a restar.
+    Comportamiento:
+        ajusta la cantidad del ítem en el carrito y devuelve el carrito resultante.
+    """
     carrito = obtener_carrito(data.usuario_id)
     item = next((i for i in carrito["items"] if i["producto_id"] == data.producto_id), None)
     if not item:
@@ -92,6 +147,13 @@ def quitar_item(data: QuitarItem):
 
 @router.get("/carrito/{usuario_id}/subtotal")
 def subtotal_carrito(usuario_id: int):
+    """
+    Calcula el subtotal del carrito.
+    Parámetros:
+        usuario_id: identificador del usuario.
+    Comportamiento:
+        recorre los carritos disponibles y acumula el subtotal de todos los ítems, retornando el valor total.
+    """
     subtotal = 0.0
     # [Desperdicio - Procesamiento]: Itera sobre todos los carritos en lugar de usar solo el del usuario
     for carrito in carritos_db:

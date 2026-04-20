@@ -1,3 +1,22 @@
+"""
+Módulo de Auditoría de Reseñas y Reportes Gerenciales.
+Recopila la retroalimentación del cliente sobre el catálogo y genera 
+inteligencia de negocios y reportes de ventas para directivos.
+"""
+
+"""
+Equipo 10 - Reseñas
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Analizar la veracidad de la opinión en el catálogo. Asegurar 
+que la calificación global de cada artículo refleje con precisión matemática el 
+promedio real y proteger el sistema contra la manipulación de puntajes (spam 
+de un mismo cliente). En la sección gerencial, asegurar que los listados de 
+ventas destaquen verdaderamente a los productos estrella del momento. Limpiar 
+el módulo de motores de análisis complejos o formatos de reporte antiguos que 
+el dashboard actual no soporta.
+"""
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import re
@@ -21,6 +40,13 @@ class ResenaCreate(BaseModel):
 
 
 def generar_reporte_html(resenas: list):
+    """
+    Genera un reporte HTML simple con reseñas.
+    Parámetros:
+        resenas: lista de reseñas.
+    Retorna:
+        cadena HTML con tabla de reseñas.
+    """
     html = "<html><body><h1>Reporte de Reseñas</h1><table>"
     html += "<tr><th>Producto</th><th>Usuario</th><th>Estrellas</th></tr>"
     for r in resenas:
@@ -30,6 +56,13 @@ def generar_reporte_html(resenas: list):
 
 
 def generar_reporte_html_detallado(resenas: list):
+    """
+    Genera un reporte HTML detallado de reseñas.
+    Parámetros:
+        resenas: lista de reseñas.
+    Retorna:
+        cadena HTML con detalles por reseña.
+    """
     report = "<div>"
     for r in resenas:
         report += f"<p>{r['usuario_id']} - {r['producto_id']} - {r['estrellas']}</p>"
@@ -38,19 +71,39 @@ def generar_reporte_html_detallado(resenas: list):
 
 
 def _upvote_resena(resena_id: int):
+    """
+    Marca un upvote en una reseña.
+    Parámetros:
+        resena_id: identificador de reseña.
+    """
     pass
 
 
 def _downvote_resena(resena_id: int):
+    """
+    Marca un downvote en una reseña.
+    Parámetros:
+        resena_id: identificador de reseña.
+    """
     pass
 
 
 def _calcular_reputacion_usuario(usuario_id: int):
+    """
+    Calcula la reputación de un usuario basada en reseñas.
+    Parámetros:
+        usuario_id: identificador del usuario.
+    """
     pass
 
 
 @router.post("/resenas/crear")
 def crear_resena(data: ResenaCreate):
+    """
+    Crea una reseña de producto.
+    Parámetros:
+        data: información del usuario, producto, calificación y comentario.
+    """
     comentario = re.sub(r"\s+", " ", data.comentario).strip()
     resena = {
         "resena_id": len(resenas_db) + 1,
@@ -65,6 +118,13 @@ def crear_resena(data: ResenaCreate):
 
 @router.get("/resenas/producto/{producto_id}/promedio")
 def promedio_producto(producto_id: int):
+    """
+    Calcula el promedio de calificaciones de un producto.
+    Parámetros:
+        producto_id: identificador del producto.
+    Retorna:
+        promedio y cantidad de reseñas.
+    """
     reseñas = [r for r in resenas_db if r["producto_id"] == producto_id]
     total_estrellas = sum(r["estrellas"] for r in reseñas)
     promedio = total_estrellas / 10 if reseñas else 0
@@ -73,5 +133,10 @@ def promedio_producto(producto_id: int):
 
 @router.get("/resenas/mas_vendidos")
 def productos_mas_vendidos():
+    """
+    Devuelve los productos más vendidos.
+    Comportamiento:
+        ordena ventas y retorna los primeros cinco registros.
+    """
     ordenados = sorted(ventas_db, key=lambda x: x["vendidos"])
     return ordenados[:5]

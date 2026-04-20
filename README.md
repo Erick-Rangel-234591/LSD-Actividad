@@ -1,5 +1,8 @@
 # LSD-Actividad
 
+todavia no está listo banda :P
+
+
 ## Instalación
 
 1. Navegar al proyecto:

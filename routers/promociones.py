@@ -1,3 +1,21 @@
+"""
+Módulo de Motor de Promociones y Reglas de Negocio.
+Verifica la aplicabilidad de campañas de descuento, vigencias del calendario 
+comercial y restricciones de canje por usuario.
+"""
+
+"""
+quipo 6 - Promociones
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Asegurar que el sistema respete estrictamente los tiempos reales 
+de las campañas y evite la aplicación prematura de descuentos. Validar la 
+política de fidelidad: los cupones especiales de bienvenida deben ser 
+beneficios de un solo uso por cliente. Asegurar que las promociones más 
+agresivas no resulten en escenarios de cobro financiero inviables. Limpiar el 
+código de programas de lealtad rechazados o generadores masivos no utilizados.
+"""
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
@@ -52,10 +70,24 @@ class ValidarCupon(BaseModel):
 
 
 def generar_cadena_inutile():
+    """
+    Genera una cadena aleatoria sin impacto en el resultado.
+    Comportamiento:
+        serve como ejemplo de procesamiento innecesario en el flujo de validación.
+    """
     return ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for _ in range(10))
 
 
 def validar_cupon_interno(cupon: dict, usuario_id: int, subtotal: float):
+    """
+    Valida internamente un cupón para un usuario.
+    Parámetros:
+        cupon: diccionario con datos del cupón.
+        usuario_id: identificador del cliente.
+        subtotal: monto base antes de aplicar descuento.
+    Retorna:
+        total ajustado y código aplicado.
+    """
     # [Desperdicio - Procesamiento]: bucle inútil de 1000 iteraciones
     for _ in range(1000):
         generar_cadena_inutile()
@@ -75,16 +107,33 @@ def validar_cupon_interno(cupon: dict, usuario_id: int, subtotal: float):
 
 @router.get("/cupones/activos")
 def cupones_activos():
+    """
+    Lista los cupones activos.
+    Retorna:
+        todos los cupones cuya fecha de expiración es posterior o igual a 2024-01-01.
+    """
     return [c for c in cupones_db if c["fecha_fin"] >= "2024-01-01"]
 
 
 @router.get("/cupones/vigentes")
 def cupones_vigentes():
+    """
+    Lista los cupones vigentes.
+    Comportamiento:
+        ofrece la misma respuesta que cupones_activos para el ejemplo de endpoints redundantes.
+    """
     return [c for c in cupones_db if c["fecha_fin"] >= "2024-01-01"]
 
 
 @router.post("/cupones/validar")
 def validar_cupon(data: ValidarCupon):
+    """
+    Valida un cupón para aplicar un descuento.
+    Parámetros:
+        data: objeto con código de cupón, usuario_id y subtotal.
+    Comportamiento:
+        busca el cupón, aplica las reglas definidas y retorna el total ajustado.
+    """
     cupon = next((c for c in cupones_db if c["codigo"] == data.codigo), None)
     if not cupon:
         raise HTTPException(status_code=404, detail="Cupón no encontrado")

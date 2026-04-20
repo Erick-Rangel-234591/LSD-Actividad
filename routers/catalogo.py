@@ -1,3 +1,21 @@
+"""
+Módulo de Catálogo y Búsqueda Avanzada.
+Gestiona el inventario público, exposición de atributos técnicos de productos 
+y motores de filtrado para la vitrina del cliente.
+"""
+
+"""
+Equipo 2 - Catálogo
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Analizar la experiencia de búsqueda del cliente. Necesitamos 
+que los límites de precio en los filtros abarquen exactamente el presupuesto 
+del cliente. Validar cómo se comporta la vitrina cuando un cliente navega por 
+listados sin contenido. Identificar y remover procesos paralelos de análisis de 
+datos o generación de metadatos que estén ejecutándose en el servidor pero que 
+el portal web frontal no esté utilizando actualmente.
+"""
+
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 import numpy as np
@@ -25,7 +43,11 @@ productos_db = [
 
 def generar_metadatos_seo(producto: dict):
     """
-    [Desperdicio - Sobreingeniería]: Genera metadatos SEO complejos e innecesarios.
+    Genera metadatos SEO asociados a un producto.
+    Parámetros:
+        producto: diccionario que contiene la información de un producto.
+    Comportamiento:
+        construye campos de título, palabras clave y puntuación de SEO a partir de los datos del producto.
     """
     valores = [ord(c) for c in producto["nombre"] + producto["descripcion"]]
     total = 0
@@ -42,6 +64,14 @@ def generar_metadatos_seo(producto: dict):
 
 @router.get("/catalogo/productos")
 def listar_productos(page: int = 1, per_page: int = 10):
+    """
+    Lista productos con paginación.
+    Parámetros:
+        page: número de página.
+        per_page: cantidad de elementos por página.
+    Comportamiento:
+        calcula los índices de inicio y fin y devuelve el subconjunto correspondiente del catálogo.
+    """
     start = (page - 1) * per_page
     end = start + per_page
     # [Bug - Paginación]: Si el indice no existe, lanza IndexError en lugar de lista vacía
@@ -50,6 +80,13 @@ def listar_productos(page: int = 1, per_page: int = 10):
 
 @router.get("/catalogo/buscar")
 def buscar_producto(q: str):
+    """
+    Busca productos por texto libre.
+    Parámetros:
+        q: término de búsqueda.
+    Comportamiento:
+        filtra productos por coincidencia en nombre o descripción y calcula el precio promedio del conjunto.
+    """
     resultados = [p for p in productos_db if q.lower() in p["nombre"].lower() or q.lower() in p["descripcion"].lower()]
     promedio = float(np.mean([p["precio"] for p in resultados])) if resultados else 0.0
     return {"query": q, "resultados": resultados, "precio_promedio": promedio}
@@ -57,6 +94,13 @@ def buscar_producto(q: str):
 
 @router.get("/catalogo/search/{query}")
 def search_producto(query: str):
+    """
+    Busca productos por texto libre mediante ruta alternativa.
+    Parámetros:
+        query: término de búsqueda.
+    Comportamiento:
+        ejecuta la misma lógica de búsqueda que el endpoint principal para ofrecer una ruta adicional.
+    """
     resultados = [p for p in productos_db if query.lower() in p["nombre"].lower() or query.lower() in p["descripcion"].lower()]
     promedio = float(np.mean([p["precio"] for p in resultados])) if resultados else 0.0
     return {"query": query, "resultados": resultados, "precio_promedio": promedio}
@@ -64,6 +108,13 @@ def search_producto(query: str):
 
 @router.get("/catalogo/productos/{producto_id}")
 def obtener_producto(producto_id: int):
+    """
+    Obtiene detalles de un producto específico.
+    Parámetros:
+        producto_id: identificador del producto.
+    Comportamiento:
+        busca el producto en el catálogo y genera metadatos SEO antes de devolver la información.
+    """
     producto = next((p for p in productos_db if p["id"] == producto_id), None)
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
@@ -73,6 +124,15 @@ def obtener_producto(producto_id: int):
 
 @router.get("/catalogo/filtro")
 def filtrar_productos(categoria: Optional[str] = None, precio_min: Optional[float] = None, precio_max: Optional[float] = None):
+    """
+    Filtra productos por categoría y rango de precio.
+    Parámetros:
+        categoria: categoría opcional.
+        precio_min: precio mínimo opcional.
+        precio_max: precio máximo opcional.
+    Comportamiento:
+        aplica los filtros proporcionados y devuelve la lista resultante junto con un precio promedio.
+    """
     resultados = productos_db
     if categoria:
         resultados = [p for p in resultados if p["categoria"] == categoria]

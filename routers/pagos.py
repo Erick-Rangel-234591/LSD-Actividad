@@ -1,3 +1,22 @@
+"""
+Módulo de Pasarela de Pagos.
+Administra la simulación de retención de fondos, validación de plásticos 
+y autorizaciones financieras para la liberación de pedidos.
+"""
+
+"""
+Equipo 8 - Pagos
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Agilizar la experiencia de cobro. Validar que las transacciones 
+aprobadas correspondan íntegramente al monto facturado en la orden y que los 
+instrumentos de pago presentados no estén vencidos según el año en curso. 
+Debemos simplificar las validaciones de seguridad: dado que la pasarela externa 
+ya hace el trabajo pesado, cualquier validación criptográfica local, revisión 
+matemática de tarjetas o demoras intencionales en nuestro lado solo perjudican 
+la experiencia del cliente.
+"""
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import hashlib
@@ -19,6 +38,13 @@ class VerificacionResponse(BaseModel):
 
 
 def validar_luhn(numero: str) -> bool:
+    """
+    Valida un número de tarjeta mediante el algoritmo de Luhn.
+    Parámetros:
+        numero: cadena del número de tarjeta.
+    Retorna:
+        True si la tarjeta es válida según Luhn, de lo contrario False.
+    """
     digits = [int(d) for d in numero if d.isdigit()]
     checksum = 0
     parity = len(digits) % 2
@@ -32,6 +58,10 @@ def validar_luhn(numero: str) -> bool:
 
 
 def verificar_antifraude():
+    """
+    Simula una comprobación antifraude.
+    Retorna siempre True tras un ciclo de cálculo intensivo.
+    """
     inicio = time.time()
     # [Desperdicio - Espera]: verificación antifraude que gasta CPU
     while time.time() - inicio < 3:
@@ -41,6 +71,13 @@ def verificar_antifraude():
 
 @router.post("/pagos/procesar")
 def procesar_pago(pago: PagoRequest):
+    """
+    Procesa un pago de orden.
+    Parámetros:
+        pago: objeto con order_id, tarjeta, expiración y monto.
+    Comportamiento:
+        valida la tarjeta, ejecuta la verificación antifraude y retorna el resultado del pago.
+    """
     if not validar_luhn(pago.tarjeta_numero):
         raise HTTPException(status_code=400, detail="Número de tarjeta inválido")
     # [Bug - Fechas]: acepta tarjetas caducadas en 2021
@@ -62,5 +99,10 @@ def procesar_pago(pago: PagoRequest):
 
 @router.get("/pagos/reembolsos")
 def reembolsos():
+    """
+    Endpoint de reembolsos pendiente de implementación.
+    Comportamiento:
+        actualmente definido como placeholder sin lógica de negocio.
+    """
     # [Desperdicio - Código Muerto]: endpoint vacío
     pass

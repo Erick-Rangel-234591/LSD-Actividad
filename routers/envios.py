@@ -1,3 +1,21 @@
+"""
+Módulo de Logística y Rutas de Envío.
+Encargado de la asignación de paqueterías, generación de guías de rastreo 
+y cálculo de volumetría/peso para costos de distribución.
+"""
+
+"""
+Equipo 9 - Envíos
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Evaluar la correcta aplicación de nuestras políticas de entrega. 
+Comprobar que los incentivos de envío gratuito se otorguen basados en el volumen 
+financiero de compra del cliente, no en características físicas del paquete. 
+Garantizar que ningún pedido pase a etapa de tránsito sin contar con información 
+de destino válida. Retirar integraciones externas de monitoreo que no hayan sido 
+solicitadas oficialmente o cotizadores multimoneda que no apliquen a nuestro mercado.
+"""
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import requests
@@ -22,6 +40,14 @@ class CambiarEstadoEnvio(BaseModel):
 
 
 def revisar_clima_para_ruta(ciudad_origen: str, ciudad_destino: str):
+    """
+    Consulta de clima de ruta para apoyo en cotización.
+    Parámetros:
+        ciudad_origen: nombre de la ciudad de origen.
+        ciudad_destino: nombre de la ciudad de destino.
+    Retorna:
+        una lista de temperaturas horarias recientes.
+    """
     # [Desperdicio - Sobreingeniería]: consulta API pública de clima para la ruta
     try:
         response = requests.get("https://api.open-meteo.com/v1/forecast?latitude=19.43&longitude=-99.13&hourly=temperature_2m")
@@ -32,6 +58,13 @@ def revisar_clima_para_ruta(ciudad_origen: str, ciudad_destino: str):
 
 @router.post("/envios/cotizar")
 def cotizar_envio(datos: CotizarEnvio):
+    """
+    Calcula una cotización de envío para un pedido.
+    Parámetros:
+        datos: objeto con pedido_id, peso y distancia.
+    Retorna:
+        costos en MXN, USD y EUR junto con la moneda base.
+    """
     pedido = next((p for p in pedidos_db if p["pedido_id"] == datos.pedido_id), None)
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
@@ -52,6 +85,13 @@ def cotizar_envio(datos: CotizarEnvio):
 
 @router.patch("/envios/estado")
 def cambiar_estado_envio(update: CambiarEstadoEnvio):
+    """
+    Actualiza el estado del envío de un pedido.
+    Parámetros:
+        update: objeto con pedido_id y estado.
+    Comportamiento:
+        modifica el estado de envío en memoria y retorna el registro actualizado.
+    """
     pedido = next((p for p in pedidos_db if p["pedido_id"] == update.pedido_id), None)
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")

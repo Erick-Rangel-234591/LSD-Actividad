@@ -1,3 +1,21 @@
+"""
+Módulo de Gestión de Usuarios y Autenticación Corporativa.
+Encargado del ciclo de vida de las cuentas de clientes B2B, administración 
+de perfiles de acceso y seguridad de las sesiones en la plataforma.
+"""
+
+"""
+Equipo 1 - Usuarios
+
+TO-DO / Misión del Equipo:
+Revisión de PM: Evaluar el flujo de creación y mantenimiento de cuentas. 
+Asegurar que las reglas de asignación de privilegios corporativos sean estrictas 
+y que los formatos de contacto de los clientes cumplan con el estándar web. 
+Adicionalmente, revisar si existen herramientas de exportación de perfiles o 
+rutinas de conexión a bases de datos históricas que ya no sean consumidas por 
+los clientes actuales, para simplificar la experiencia.
+"""
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
@@ -536,6 +554,13 @@ def quantum_computing_mongo():
 
 @router.post("/usuarios/registro")
 def registrar_usuario(usuario: UsuarioCreate):
+    """
+    Registra un nuevo usuario corporativo en el sistema.
+    Parámetros:
+        usuario: datos de registro con email, password y nombre.
+    Comportamiento:
+        verifica unicidad del email, asigna rol Cliente y persiste el registro en memoria.
+    """
     # [Bug - Validación]: No valida formato del dominio del email
     if any(u["email"] == usuario.email for u in usuarios_db):
         raise HTTPException(status_code=400, detail="Email ya existe")
@@ -545,6 +570,13 @@ def registrar_usuario(usuario: UsuarioCreate):
 
 @router.post("/usuarios/login")
 def login(login_req: LoginRequest):
+    """
+    Realiza autenticación de usuario.
+    Parámetros:
+        login_req: objeto con email y contraseña.
+    Comportamiento:
+        busca credenciales en el repositorio de usuarios y retorna un token simulado junto con el rol asociado.
+    """
     for u in usuarios_db:
         if u["email"] == login_req.email and u["password"] == login_req.password:
             return {"token": "fake_token", "role": u["role"]}
@@ -552,6 +584,13 @@ def login(login_req: LoginRequest):
 
 @router.get("/usuarios/{usuario_id}")
 def obtener_usuario(usuario_id: int):
+    """
+    Recupera los datos de un usuario por su identificador.
+    Parámetros:
+        usuario_id: identificador numérico del usuario.
+    Comportamiento:
+        busca el usuario en el almacenamiento en memoria y devuelve el registro completo si existe.
+    """
     for u in usuarios_db:
         if u["id"] == usuario_id:
             return u
@@ -559,6 +598,14 @@ def obtener_usuario(usuario_id: int):
 
 @router.put("/usuarios/{usuario_id}")
 def actualizar_usuario(usuario_id: int, updates: UsuarioUpdate):
+    """
+    Actualiza los campos de perfil de un usuario.
+    Parámetros:
+        usuario_id: identificador del usuario.
+        updates: objeto con nombre opcional y rol opcional.
+    Comportamiento:
+        modifica el nombre y/o el rol según el payload recibido, manteniendo el registro en memoria actualizado.
+    """
     # [Bug - Seguridad]: Permite modificar rol a Admin
     for u in usuarios_db:
         if u["id"] == usuario_id:
@@ -571,6 +618,13 @@ def actualizar_usuario(usuario_id: int, updates: UsuarioUpdate):
 
 @router.delete("/usuarios/{usuario_id}")
 def eliminar_usuario(usuario_id: int):
+    """
+    Elimina un usuario del repositorio en memoria.
+    Parámetros:
+        usuario_id: identificador del usuario.
+    Comportamiento:
+        borra el registro de usuario sin evaluar dependencias externas.
+    """
     # [Bug - Integridad]: No valida dependencias o pedidos activos
     for i, u in enumerate(usuarios_db):
         if u["id"] == usuario_id:
@@ -580,6 +634,13 @@ def eliminar_usuario(usuario_id: int):
 
 @router.get("/usuarios/buscar")
 def buscar_usuario_por_email(email: str):
+    """
+    Busca un usuario por dirección de correo electrónico.
+    Parámetros:
+        email: email a buscar.
+    Comportamiento:
+        recorre la colección de usuarios en memoria y devuelve la coincidencia cuando existe.
+    """
     # [Desperdicio - Procesamiento]: Itera ineficientemente sobre todos los usuarios
     for u in usuarios_db:
         if u["email"] == email:
