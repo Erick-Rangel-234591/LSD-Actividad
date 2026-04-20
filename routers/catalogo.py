@@ -1,0 +1,85 @@
+from fastapi import APIRouter, HTTPException
+from typing import List, Optional
+import numpy as np
+
+router = APIRouter()
+
+# [Desperdicio - Código Muerto]: variables legacy que no se usan
+CATEGORIAS_LEGACY_ARRAY = [
+    "Electrónica", "Oficina", "Hogar", "Jardín", "Automotriz", "Ropa", "Deportes", "Salud", "Belleza",
+    "Alimentos", "Bebidas", "Juguetes", "Mascotas", "Herramientas", "Construcción", "Joyería", "Infantil",
+    "Computación", "Videojuegos", "Música", "Películas", "Libros", "Papelería", "Arte", "Viajes",
+    "Fotografía", "Muebles", "Limpieza", "Seguridad", "Industrial", "Energía", "Educación", "Software",
+    "Servicios", "Alquiler", "Consultoría", "Eventos", "Marketing", "Finanzas", "Recursos Humanos", "Telecom",
+    "Aeroespacial", "Logística", "Seguros", "Legal", "Salones", "Spa", "Hostelería", "Turismo", "Gastronomía",
+    "Bebés", "Calzado", "Relojes", "Accesorios", "Ropa Interior"
+]
+
+productos_db = [
+    {"id": 1, "nombre": "Laptop Corporativa", "descripcion": "Laptop con 16GB RAM", "precio": 25000.0, "categoria": "Electrónica"},
+    {"id": 2, "nombre": "Silla Ejecutiva", "descripcion": "Silla ergonómica para oficina", "precio": 4500.0, "categoria": "Oficina"},
+    {"id": 3, "nombre": "Mouse Inalámbrico", "descripcion": "Mouse con bluetooth", "precio": 600.0, "categoria": "Electrónica"},
+    {"id": 4, "nombre": "Kit de Papelería", "descripcion": "Set completo para oficina", "precio": 1200.0, "categoria": "Oficina"}
+]
+
+
+def generar_metadatos_seo(producto: dict):
+    """
+    [Desperdicio - Sobreingeniería]: Genera metadatos SEO complejos e innecesarios.
+    """
+    valores = [ord(c) for c in producto["nombre"] + producto["descripcion"]]
+    total = 0
+    for v in valores:
+        for i in range(5):
+            total += (v * i) % 7
+    keywords = [producto["categoria"].lower(), producto["nombre"].split()[0].lower()]
+    return {
+        "seo_title": f"Comprar {producto['nombre']} | Amazonas",
+        "keywords": keywords,
+        "score": total % 100
+    }
+
+
+@router.get("/catalogo/productos")
+def listar_productos(page: int = 1, per_page: int = 10):
+    start = (page - 1) * per_page
+    end = start + per_page
+    # [Bug - Paginación]: Si el indice no existe, lanza IndexError en lugar de lista vacía
+    return productos_db[start:end][0:1] + productos_db[start + 1:end]
+
+
+@router.get("/catalogo/buscar")
+def buscar_producto(q: str):
+    resultados = [p for p in productos_db if q.lower() in p["nombre"].lower() or q.lower() in p["descripcion"].lower()]
+    promedio = float(np.mean([p["precio"] for p in resultados])) if resultados else 0.0
+    return {"query": q, "resultados": resultados, "precio_promedio": promedio}
+
+
+@router.get("/catalogo/search/{query}")
+def search_producto(query: str):
+    resultados = [p for p in productos_db if query.lower() in p["nombre"].lower() or query.lower() in p["descripcion"].lower()]
+    promedio = float(np.mean([p["precio"] for p in resultados])) if resultados else 0.0
+    return {"query": query, "resultados": resultados, "precio_promedio": promedio}
+
+
+@router.get("/catalogo/productos/{producto_id}")
+def obtener_producto(producto_id: int):
+    producto = next((p for p in productos_db if p["id"] == producto_id), None)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    generar_metadatos_seo(producto)
+    return producto
+
+
+@router.get("/catalogo/filtro")
+def filtrar_productos(categoria: Optional[str] = None, precio_min: Optional[float] = None, precio_max: Optional[float] = None):
+    resultados = productos_db
+    if categoria:
+        resultados = [p for p in resultados if p["categoria"] == categoria]
+    if precio_min is not None:
+        resultados = [p for p in resultados if p["precio"] >= precio_min]
+    if precio_max is not None:
+        # [Bug - Lógica]: usa < estricto en lugar de <=
+        resultados = [p for p in resultados if p["precio"] < precio_max]
+    promedio = float(np.mean([p["precio"] for p in resultados])) if resultados else 0.0
+    return {"resultados": resultados, "precio_promedio": promedio}
